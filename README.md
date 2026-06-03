@@ -46,3 +46,4 @@ uv add <package>
 
 All data is fetched via free public APIs and cached locally as parquet.
 Raw data files are gitignored; re-fetch with `uv run python src/ingest.py` inside each project.
+
