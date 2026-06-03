@@ -32,14 +32,17 @@ Reusable modules across projects:
 
 ## Setup
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate      # Windows
-source .venv/bin/activate   # Mac/Linux
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
-pip install -r requirements.txt
-pip install -e .             # installs lib/ as editable package
+```bash
+uv sync          # creates .venv + installs all dependencies from uv.lock
+uv run jupyter notebook
+```
+
+To add a new dependency:
+```bash
+uv add <package>
 ```
 
 All data is fetched via free public APIs and cached locally as parquet.
-Raw data files are gitignored; re-fetch with `python src/ingest.py` inside each project.
+Raw data files are gitignored; re-fetch with `uv run python src/ingest.py` inside each project.

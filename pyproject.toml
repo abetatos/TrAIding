@@ -7,6 +7,32 @@ name = "trAIding"
 version = "0.1.0"
 description = "Quantitative research on financial markets"
 requires-python = ">=3.11"
+dependencies = [
+    # Core
+    "pandas>=2.0",
+    "numpy>=1.26",
+    "pyarrow>=14.0",
+    # HTTP / APIs
+    "requests>=2.31",
+    "tenacity>=8.2",
+    # NLP
+    "transformers>=4.40",
+    "torch>=2.1",
+    "vaderSentiment>=3.3",
+    # ML / Stats
+    "scikit-learn>=1.4",
+    "scipy>=1.12",
+    "statsmodels>=0.14",
+    # Visualization
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    # Notebooks
+    "jupyter>=1.0",
+    "nbformat>=5.9",
+    # Dev
+    "python-dotenv>=1.0",
+    "tqdm>=4.66",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

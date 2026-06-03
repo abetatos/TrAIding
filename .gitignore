@@ -20,6 +20,9 @@ build/
 venv/
 env/
 
+# uv — commit uv.lock for reproducibility, ignore the cache
+.uv/
+
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb_checkpoints
