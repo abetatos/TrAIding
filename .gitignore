@@ -49,3 +49,6 @@ Thumbs.db
 # Quarto output
 _site/
 /.quarto/
+
+# Private interview prep — not for publishing
+interview_prep/
