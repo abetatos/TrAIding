@@ -87,3 +87,36 @@ def entropy_bar(prob_series: pd.Series) -> float:
     p = prob_series.dropna().clip(1e-10, 1 - 1e-10)
     p = p / p.sum()
     return float(scipy_entropy(p))
+
+
+# ── Order Flow Imbalance (Cont, Kukanov & Stoikov 2014) ──────────────────────
+
+def order_flow_imbalance(book: pd.DataFrame) -> pd.Series:
+    """
+    Per-update order flow imbalance e_n from top-of-book (Cont, Kukanov & Stoikov 2014).
+
+        e_n =  q^b_n 1{P^b_n >= P^b_{n-1}}  -  q^b_{n-1} 1{P^b_n <= P^b_{n-1}}
+              - q^a_n 1{P^a_n <= P^a_{n-1}}  +  q^a_{n-1} 1{P^a_n >= P^a_{n-1}}
+
+    Positive e_n = net buy-side pressure (bid replenished / ask consumed). Sum e_n over an
+    interval to get the bar-level OFI, a strong contemporaneous driver of price moves.
+
+    book : DataFrame ordered by time with columns [bid_px, bid_qty, ask_px, ask_qty].
+    Returns e_n aligned to book.index (first element = 0).
+    """
+    pb = book["bid_px"].to_numpy(float); qb = book["bid_qty"].to_numpy(float)
+    pa = book["ask_px"].to_numpy(float); qa = book["ask_qty"].to_numpy(float)
+    pb0, qb0 = np.roll(pb, 1), np.roll(qb, 1)
+    pa0, qa0 = np.roll(pa, 1), np.roll(qa, 1)
+
+    bid_term = np.where(pb >= pb0, qb, 0.0) - np.where(pb <= pb0, qb0, 0.0)
+    ask_term = np.where(pa <= pa0, qa, 0.0) - np.where(pa >= pa0, qa0, 0.0)
+    e = bid_term - ask_term
+    e[0] = 0.0  # no previous update for the first row
+    return pd.Series(e, index=book.index, name="ofi")
+
+
+def depth_imbalance(bid_qty: pd.Series, ask_qty: pd.Series) -> pd.Series:
+    """Top-of-book depth imbalance in [-1, 1]: (q^b - q^a) / (q^b + q^a)."""
+    denom = (bid_qty + ask_qty).replace(0, np.nan)
+    return ((bid_qty - ask_qty) / denom).fillna(0.0)

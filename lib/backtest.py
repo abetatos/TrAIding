@@ -4,6 +4,7 @@ Focused on binary prediction markets (probability forecasts).
 """
 import numpy as np
 import pandas as pd
+from scipy.stats import norm, skew, kurtosis
 from sklearn.model_selection import KFold
 
 
@@ -78,6 +79,85 @@ def walk_forward_splits(
         test_idx = np.arange(test_start, test_end)
         splits.append((train_idx, test_idx))
     return splits
+
+
+# ── Purged K-Fold cross-validation (AFML Ch. 7) ──────────────────────────────
+
+def purged_kfold_splits(
+    t1: pd.Series,
+    n_splits: int = 5,
+    embargo_pct: float = 0.0,
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    """
+    Purged K-Fold with embargo (AFML Ch. 7, snippet 7.3). Removes from the training set any
+    label whose horizon [t0, t1] overlaps the test fold (purge), plus an embargo of observations
+    immediately after the test fold. Without this, overlapping labels leak the test outcome.
+
+    t1 : Series indexed by event-start time, values = event-end time (the label horizon).
+    Returns positional (train_idx, test_idx) arrays.
+    """
+    t1 = t1.sort_index()
+    n = len(t1)
+    indices = np.arange(n)
+    mbrg = int(n * embargo_pct)
+    test_ranges = [(g[0], g[-1] + 1) for g in np.array_split(indices, n_splits)]
+
+    splits = []
+    for i, j in test_ranges:
+        test_idx = indices[i:j]
+        t0 = t1.index[i]                       # test fold start time
+        max_t1 = t1.iloc[i:j].max()            # latest horizon end inside the test fold
+        max_t1_idx = t1.index.searchsorted(max_t1)
+
+        # Train = labels that close at/before the test starts (no forward overlap) ...
+        train_idx = indices[(t1 <= t0).to_numpy()]
+        # ... plus labels that start after the test horizon ends, past the embargo.
+        if max_t1_idx < n:
+            train_idx = np.concatenate((train_idx, indices[max_t1_idx + mbrg:]))
+        splits.append((train_idx, test_idx))
+    return splits
+
+
+# ── Sharpe ratio inference (AFML Ch. 14) ─────────────────────────────────────
+
+def sharpe_ratio(returns: np.ndarray) -> float:
+    """Non-annualised Sharpe ratio of a per-observation return series."""
+    r = np.asarray(returns, dtype=float)
+    sd = r.std(ddof=1)
+    return float(r.mean() / sd) if sd > 0 else 0.0
+
+
+def probabilistic_sharpe_ratio(returns: np.ndarray, sr_benchmark: float = 0.0) -> float:
+    """
+    Probabilistic Sharpe Ratio (AFML Ch. 14): P(true SR > benchmark) given the estimated SR,
+    sample length and the return distribution's skew/kurtosis. Higher = more confident the SR
+    is real rather than a small-sample / non-normal artefact.
+    """
+    r = np.asarray(returns, dtype=float)
+    n = len(r)
+    if n < 3 or r.std(ddof=1) == 0:
+        return np.nan
+    sr = sharpe_ratio(r)
+    g3 = float(skew(r))
+    g4 = float(kurtosis(r, fisher=False))  # non-excess (normal = 3)
+    denom = np.sqrt(1 - g3 * sr + (g4 - 1) / 4 * sr**2)
+    return float(norm.cdf((sr - sr_benchmark) * np.sqrt(n - 1) / denom))
+
+
+def deflated_sharpe_ratio(returns: np.ndarray, n_trials: int, sr_trials_std: float) -> float:
+    """
+    Deflated Sharpe Ratio (AFML Ch. 14): PSR against the *expected maximum* SR that `n_trials`
+    independent strategies would produce by chance (variance `sr_trials_std**2`). This is the
+    honest test after a parameter search — it penalises selection bias / multiple testing.
+    """
+    if n_trials < 1 or sr_trials_std <= 0:
+        return np.nan
+    emc = 0.5772156649  # Euler-Mascheroni
+    sr0 = sr_trials_std * (
+        (1 - emc) * norm.ppf(1 - 1.0 / n_trials)
+        + emc * norm.ppf(1 - 1.0 / (n_trials * np.e))
+    )
+    return probabilistic_sharpe_ratio(returns, sr_benchmark=sr0)
 
 
 # ── Forward return analysis ──────────────────────────────────────────────────

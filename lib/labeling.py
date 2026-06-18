@@ -69,3 +69,39 @@ def meta_labels(primary_labels: pd.Series, predicted_labels: pd.Series) -> pd.Se
     1 where primary is correct (to size positions) and 0 where wrong.
     """
     return (primary_labels == predicted_labels).astype(int)
+
+
+def vertical_barriers(bar_index: pd.DatetimeIndex, num_bars: int) -> pd.Series:
+    """
+    Vertical (time) barrier `t1` for each event: the timestamp `num_bars` ahead.
+    Events too close to the end (no full horizon) get NaT and should be dropped.
+    Returns a Series indexed by event-start time, values = barrier time.
+    """
+    idx = pd.Series(bar_index, index=bar_index)
+    return idx.shift(-num_bars)
+
+
+# ── Sample weights by uniqueness (AFML Ch. 4) ────────────────────────────────
+
+def num_concurrent_events(bar_index: pd.DatetimeIndex, t1: pd.Series) -> pd.Series:
+    """
+    Count, for each bar, how many label spans [t0, t1] are concurrently open.
+    Labels overlap in time, so they are not IID — this drives the uniqueness weights.
+    """
+    t1 = t1.dropna()
+    count = pd.Series(0, index=bar_index, dtype=int)
+    for t_in, t_out in t1.items():
+        count.loc[t_in:t_out] += 1
+    return count
+
+
+def average_uniqueness(t1: pd.Series, num_co_events: pd.Series) -> pd.Series:
+    """
+    Average uniqueness of each label = mean of 1/concurrency over its span (AFML Ch. 4).
+    Use as `sample_weight` so overlapping (redundant) labels count less.
+    """
+    t1 = t1.dropna()
+    wght = pd.Series(index=t1.index, dtype=float)
+    for t_in, t_out in t1.items():
+        wght.loc[t_in] = (1.0 / num_co_events.loc[t_in:t_out]).mean()
+    return wght
