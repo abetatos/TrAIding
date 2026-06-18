@@ -9,7 +9,7 @@ Personal research repo on financial markets. Projects combine classical quant te
 
 | # | Project | Status | Key Finding |
 |---|---------|--------|-------------|
-| 01 | [Polymarket Calibration + Sentiment Signal](projects/01_polymarket_calibration/) | In progress | — |
+| 01 | [Polymarket Calibration](projects/01_polymarket_calibration/) | Complete | Polymarket is **well calibrated** (Brier Skill Score 0.49); sharp at the extremes, coin-flip in the 30–70% middle |
 | 02 | [Crypto Microstructure: Order Flow Imbalance](projects/02_crypto_microstructure_ofi/) | Complete | OFI strongly explains the *current* bar (R²=0.58) but has **no predictive edge** out-of-sample — deflated Sharpe 0.13 |
 
 ---

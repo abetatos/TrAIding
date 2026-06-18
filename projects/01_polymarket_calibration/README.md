@@ -1,32 +1,39 @@
-# Project 01 — Polymarket Calibration + Sentiment Signal
+# Project 01 — Polymarket Calibration
 
 ## Hypothesis
 
 Prediction markets are considered well-calibrated — a market trading at 70% should resolve
-YES ~70% of the time. But are they? And when NLP sentiment diverges from market odds, does
-the market subsequently correct toward sentiment (signal alpha) or away (contrarian signal)?
+YES ~70% of the time. But are they? We test this across topics, and because Polymarket tags only
+~41% of markets, we first **discover the category taxonomy from the data** (embeddings → clustering
+→ zero-shot naming).
 
 ## Data
 
 | File | Source | Description |
 |------|--------|-------------|
-| `data/markets.parquet` | Gamma API | Resolved markets: question, category, dates, outcome |
-| `data/price_history.parquet` | Gamma API | Daily YES-price per market |
-| `data/sentiment_signal_vader.parquet` | GDelt | Sentiment score + divergence per market |
+| `data/markets.parquet` | Gamma API | Resolved binary markets: question, dates, outcome, volume |
+| `data/markets_enriched.parquet` | + NLU pipeline | Markets with a data-driven `category_clean` label |
+| `data/price_history.parquet` | CLOB API | Daily YES-price per market |
 
-Fetch fresh:
+Fetch fresh (parquet is gitignored):
 ```bash
-python src/ingest.py               # ~1000+ resolved markets
-python src/signal_sentiment.py     # VADER baseline (fast)
-python src/signal_sentiment.py --model finbert  # upgrade
+python src/ingest.py               # resolved markets + daily price history → data/
 ```
+
+**Sample:** 375 resolved markets, of which **140** have usable price history (2023-01-01 →
+2024-09-10); YES base rate 30.7%.
 
 ## Notebooks
 
 | Notebook | Content |
 |----------|---------|
-| `notebooks/01_calibration.ipynb` | Calibration plots, Brier score by category, biggest mispricings |
-| `notebooks/02_sentiment_signal.ipynb` | Sentiment vs odds divergence, forward return analysis |
+| [`notebooks/01_calibration.ipynb`](notebooks/01_calibration.ipynb) | Full pipeline: NLU taxonomy, calibration overall & by category, biggest mispricings, price convergence |
+
+Plots: [`01_calibration_overall.png`](plots/01_calibration_overall.png) ·
+[`02_calibration_by_category.png`](plots/02_calibration_by_category.png) ·
+[`03_mispricings.png`](plots/03_mispricings.png) ·
+[`04_price_convergence.png`](plots/04_price_convergence.png) ·
+[`00_category_enrichment.png`](plots/00_category_enrichment.png)
 
 ## Category taxonomy (NLU)
 
@@ -61,12 +68,19 @@ Based on 140 resolved binary markets with daily price history (2023, YES base ra
 - **Worst calibrated category:** Inflation / Fed (BS 0.173) and sports/chess — truly uncertain
   competitive outcomes.
 - **Biggest mispricing:** *"Will Donald J. Trump be indicted by March 31, 2023?"* — priced 6%,
-  resolved YES (error −0.94).
-- **Sentiment signal direction:** *(pending — notebook `02`)*
+  resolved YES (error −0.94), on $0.87M volume.
 
 > **Caveats:** only 140 of 375 markets have price history; several calibration bins and per-category
 > counts have n ≤ 5–9, so findings are **directional, not statistically tight**. The 2023 sample is
 > dominated by a few event types and is not blindly extrapolable.
+
+## Possible extensions
+
+- **Sentiment-divergence signal:** when NLP news sentiment diverges from market odds, does the market
+  correct toward it (alpha) or away (contrarian)? Scaffolded in
+  [`src/signal_sentiment.py`](src/signal_sentiment.py) (GDelt headlines + VADER → finBERT) but not
+  yet analysed.
+- More markets / a multi-year sample to tighten the per-category calibration estimates.
 
 ## Structure
 
@@ -74,9 +88,9 @@ Based on 140 resolved binary markets with daily price history (2023, YES base ra
 01_polymarket_calibration/
 ├── data/               # gitignored; run ingest.py to populate
 ├── notebooks/
-│   ├── 01_calibration.ipynb
-│   └── 02_sentiment_signal.ipynb
+│   └── 01_calibration.ipynb       # full analysis (NLU taxonomy + calibration)
+├── plots/                         # figures rendered by the notebook
 └── src/
-    ├── ingest.py           # Gamma API → parquet
-    └── signal_sentiment.py # GDelt + VADER/finBERT → signal
+    ├── ingest.py           # Gamma + CLOB APIs → parquet
+    └── signal_sentiment.py # GDelt + VADER/finBERT scaffold (extension, not yet used)
 ```
