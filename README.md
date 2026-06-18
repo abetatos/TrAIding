@@ -11,6 +11,7 @@ Personal research repo on financial markets. Projects combine classical quant te
 |---|---------|--------|-------------|
 | 01 | [Polymarket Calibration](projects/01_polymarket_calibration/) | Complete | Polymarket is **well calibrated** (Brier Skill Score 0.49); sharp at the extremes, coin-flip in the 30–70% middle |
 | 02 | [Crypto Microstructure: Order Flow Imbalance](projects/02_crypto_microstructure_ofi/) | Complete | OFI strongly explains the *current* bar (R²=0.58) but has **no predictive edge** out-of-sample — deflated Sharpe 0.13 |
+| 03 | [Cross-Sectional Equity Factors](projects/03_equity_factor_xsection/) | Complete | Price-only factors on the S&P 500 are too weak to trade: every long-short book is **negative net of costs**, deflated Sharpe ≈ 0; low-vol even has the *wrong sign* in-sample |
 
 ---
 
