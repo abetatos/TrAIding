@@ -10,6 +10,7 @@ Personal research repo on financial markets. Projects combine classical quant te
 | # | Project | Status | Key Finding |
 |---|---------|--------|-------------|
 | 01 | [Polymarket Calibration + Sentiment Signal](projects/01_polymarket_calibration/) | In progress | — |
+| 02 | [Crypto Microstructure: Order Flow Imbalance](projects/02_crypto_microstructure_ofi/) | Complete | OFI strongly explains the *current* bar (R²=0.58) but has **no predictive edge** out-of-sample — deflated Sharpe 0.13 |
 
 ---
 
@@ -18,9 +19,10 @@ Personal research repo on financial markets. Projects combine classical quant te
 Reusable modules across projects:
 
 - **`data_utils`** — parquet I/O, HTTP caching, rate-limit-aware retries
-- **`labeling`** — triple-barrier labeling, meta-labeling (AFML Ch. 3)
-- **`features`** — fractional differentiation, entropy bars, microstructure features (AFML Ch. 5, 18)
-- **`backtest`** — walk-forward validation, Brier score, combinatorial purged CV
+- **`bars`** — information-driven bar construction: tick/volume/dollar, imbalance & run bars, diagnostics (AFML Ch. 2)
+- **`labeling`** — triple-barrier labeling, meta-labeling, uniqueness sample weights (AFML Ch. 3–4)
+- **`features`** — fractional differentiation, microstructure features, Order Flow Imbalance (AFML Ch. 5, 18)
+- **`backtest`** — Brier score, walk-forward & purged K-fold CV, probabilistic/deflated Sharpe (AFML Ch. 7, 14)
 
 ---
 
