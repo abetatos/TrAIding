@@ -12,6 +12,7 @@ Personal research repo on financial markets. Projects combine classical quant te
 | 01 | [Polymarket Calibration](projects/01_polymarket_calibration/) | Complete | Polymarket is **well calibrated** (Brier Skill Score 0.49); sharp at the extremes, coin-flip in the 30–70% middle |
 | 02 | [Crypto Microstructure: Order Flow Imbalance](projects/02_crypto_microstructure_ofi/) | Complete | OFI strongly explains the *current* bar (R²=0.58) but has **no predictive edge** out-of-sample — deflated Sharpe 0.13 |
 | 03 | [Cross-Sectional Equity Factors](projects/03_equity_factor_xsection/) | Complete | Price-only factors on the S&P 500 are too weak to trade: every long-short book is **negative net of costs**, deflated Sharpe ≈ 0; low-vol even has the *wrong sign* in-sample |
+| 04 | [Labeling Pitfalls](projects/04_labeling_pitfalls/) | Complete | An audit of the AFML pipeline on simulated data with known ground truth. Random k-fold reports **AUC 0.732** where the label is a coin flip; meta-labeling's **F1 argument fails by construction** (but sizing beats filtering, +0.45 Sharpe); and the best of ~186 defensible pipeline configurations on **pure noise** shows in-sample Sharpe **1.086**, out-of-sample **−0.10** |
 
 ---
 
@@ -24,6 +25,9 @@ Reusable modules across projects:
 - **`labeling`** — triple-barrier labeling, meta-labeling, uniqueness sample weights (AFML Ch. 3–4)
 - **`features`** — fractional differentiation, microstructure features, Order Flow Imbalance (AFML Ch. 5, 18)
 - **`backtest`** — Brier score, walk-forward & purged K-fold CV, probabilistic/deflated Sharpe (AFML Ch. 7, 14)
+
+Project 04 is deliberately self-contained (its own `src/`, no `lib/` imports) so that every claim
+it audits is checked against an implementation written from scratch for that purpose.
 
 ---
 
